@@ -20,6 +20,8 @@ class MetsRequests {
         this.dataPath = path;
     }
 
+
+
     startTransformToUsableTOC() {
         this.usableTOC = this.transformToUsableTOC(this.metsData.mets.structMap[2].div[0], {});
         console.log(this.usableTOC);
@@ -50,10 +52,7 @@ class MetsRequests {
 
     async parseMets(mets) {
         this.parser = new xml2js.Parser();
-        let pathModified = mets.PATH.split("/");
-        pathModified.splice(0, 1)
-        pathModified = pathModified.join("/");
-        let path = `/${pathModified}/${mets.FILENAME}`;
+        let path = `/${mets.PATH}/${mets.FILENAME}`;
         let xmlData = await fs.readFile(this.dataPath + path)
         this.metsData = await this.parser.parseStringPromise(xmlData);
         this.startTransformToUsableTOC();

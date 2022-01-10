@@ -8,11 +8,9 @@
             <b-overlay :show="loadingMets" rounded="sm"
               ><toc-tree class="scrollable" :metsDiv="metsDiv" /> </b-overlay
           ></pane>
-          <pane min-size="5">
-            
+          <pane min-size="5" class="scrollable-xy">
             <PdfReader />
-            
-            </pane          >
+          </pane>
           <pane size="15" min-size="5">
             <b-container style="height: 100%" class="p-0">
               <b-row class="mt-3 ml-1 mr-1 justify-content-center">
@@ -103,5 +101,9 @@ export default {
 .scrollable {
   height: 100%;
   overflow-x: auto;
+}
+
+.scrollable-xy {
+  /*overflow: scroll;*/
 }
 </style>

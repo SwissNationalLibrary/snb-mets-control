@@ -15,7 +15,6 @@
 </template>
 
 <script>
-import TocTree from "./TocTree.vue";
 
 export default {
   name: "TocTree",
@@ -27,7 +26,7 @@ export default {
     metsDiv: Object,
   },
   components: {
-    TocTree,
+    TocTree: () => import('./TocTree.vue'),
   },
   computed: {
     formattedEntry() {
