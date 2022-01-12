@@ -1,7 +1,6 @@
 <template>
   <div style="height: 100vh">
     <splitpanes class="default-theme" horizontal>
-      <pane size="15" max-size="50" id="pane-list-mets"> </pane>
       <pane>
         <splitpanes>
           <pane size="15" min-size="5">
@@ -9,7 +8,7 @@
               ><toc-tree class="scrollable" :metsDiv="metsDiv" /> </b-overlay
           ></pane>
           <pane min-size="5" class="scrollable-xy">
-            <PdfReader />
+            <PdfReader :mets="selectedMets"></PdfReader>
           </pane>
           <pane size="15" min-size="5">
             <b-container style="height: 100%" class="p-0">
@@ -74,8 +73,10 @@ export default {
   watch: {
     async selectedMets(selected) {
       this.loadingMets = true;
-      await metsAltoRequests.parseMets(selected);
-      this.metsDiv = metsAltoRequests.metsLogicalStructure;
+      metsAltoRequests.parseMets(selected).then(() => {
+        this.metsDiv = metsAltoRequests.metsLogicalStructure;
+      });
+
       this.loadingMets = false;
     },
   },

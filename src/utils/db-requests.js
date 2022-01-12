@@ -82,6 +82,29 @@ class DbRequests {
         });
     }
 
+    async getPDFFilename(metsID) {
+        return new Promise((resolve, reject) => {
+            console.log("first select")
+
+            this.db.get("SELECT FILENAME FROM LINKEDFILES WHERE ID_METS = ? AND TYPE = 'ISSUEPDFGRP'", metsID, async (err, data) => {
+                if (err) reject(err);
+                console.log("after select")
+
+                resolve(data.FILENAME);
+            });
+
+        });
+    }
+
+    async getAltoFilenames(metsID) {
+        return new Promise((resolve, reject) => {
+            this.db.all("SELECT FILEID, FILENAME FROM LINKEDFILES WHERE ID_METS = ? AND TYPE = 'ALTOGRP' ORDER BY FILEID", metsID, async (err, data) => {
+                if (err) reject(err);
+                resolve(data);
+            });
+        });
+    }
+
     async closeDatabase() {
         return new Promise((resolve, reject) => {
             this.db.close((err) => {

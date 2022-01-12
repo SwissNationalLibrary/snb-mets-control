@@ -1,21 +1,21 @@
 <template>
   <div v-if="!hasNothing">
-      <p class="toc-element" v-if="showEntry">
-        {{ formattedEntry }}
-      </p>
-      <div v-if="!isFinished">
-        <TocTree
-          v-for="div in metsDiv.children"
-          :key="div.label"
-          :metsDiv="div"
-          :prefix="prefix + (showEntry ? '>' : '')"
-        />
-      </div>
+    <p class="toc-element" v-if="showEntry">
+      {{ prefix }}<span @click="closed = !closed">{{ closedSign }}</span>
+      {{ formattedEntry }}
+    </p>
+    <div v-if="!isFinished" :id="metsDiv.id" :class="{ 'is-closed': closed }">
+      <TocTree
+        v-for="div in metsDiv.children"
+        :key="div.id"
+        :metsDiv="div"
+        :prefix="prefix + (showEntry ? '\xa0\xa0\xa0\xa0' : '')"
+      />
+    </div>
   </div>
 </template>
 
 <script>
-
 export default {
   name: "TocTree",
   props: {
@@ -24,16 +24,21 @@ export default {
       default: "",
     },
     metsDiv: Object,
+    
   },
   components: {
-    TocTree: () => import('./TocTree.vue'),
+    TocTree: () => import("./TocTree.vue"),
   },
   computed: {
+    closedSign() {
+      if (this.isFinished) return "";
+      return this.closed ? "▲" : "▼";
+    },
     formattedEntry() {
       if (this.metsDiv.label) {
-        return `${this.prefix}[${this.metsDiv.type}] ${this.metsDiv.label} `;
+        return `[${this.metsDiv.type}] ${this.metsDiv.label} `;
       } else {
-        return `${this.prefix}[${this.metsDiv.type}]`;
+        return `[${this.metsDiv.type}]`;
       }
     },
     showEntry() {
@@ -59,15 +64,25 @@ export default {
   },
   methods: {},
 
-  data: () => ({}),
+  data: () => ({
+    closed: false,
+  }),
 };
 </script>
 
 <style>
 .toc-element {
-  margin: 2px;
+  font-size: small;
+  padding-bottom: 2px;
+  border-bottom: 1px solid black;
   overflow-x: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.is-closed {
+  display: none;
 }
 </style>
