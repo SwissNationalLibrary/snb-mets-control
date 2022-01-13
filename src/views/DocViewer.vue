@@ -5,10 +5,19 @@
         <splitpanes>
           <pane size="15" min-size="5">
             <b-overlay :show="loadingMets" rounded="sm"
-              ><toc-tree class="scrollable" :metsDiv="metsDiv" /> </b-overlay
+              ><toc-tree
+                @data-changed="tocData = $event"
+                :pageNum="pageNum"
+                class="scrollable"
+                :metsDiv="metsDiv"
+              /> </b-overlay
           ></pane>
           <pane min-size="5" class="scrollable-xy">
-            <PdfReader :mets="selectedMets"></PdfReader>
+            <PdfReader
+              @page-changed="pageNum = $event"
+              :tocData="tocData"
+              :mets="selectedMets"
+            ></PdfReader>
           </pane>
           <pane size="15" min-size="5">
             <b-container style="height: 100%" class="p-0">
@@ -68,6 +77,8 @@ export default {
       samplesOnly: true,
       loadingMets: false,
       metsDiv: null,
+      pageNum: 0,
+      tocData: null,
     };
   },
   watch: {

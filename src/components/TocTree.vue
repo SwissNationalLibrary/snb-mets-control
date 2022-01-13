@@ -1,15 +1,29 @@
 <template>
   <div v-if="!hasNothing">
-    <p class="toc-element" v-if="showEntry">
+    <p
+      class="toc-element"
+      :class="{
+        'current-page': isCurrentPage,
+        selected: metsDiv.id == currentSelected,
+      }"
+      v-if="showEntry"
+      @click="onElementClicked"
+    >
       {{ prefix }}<span @click="closed = !closed">{{ closedSign }}</span>
       {{ formattedEntry }}
     </p>
-    <div v-if="!isFinished" :id="metsDiv.id" :class="{ 'is-closed': closed }">
+    <div v-if="!isFinished">
       <TocTree
+        :newSelected="currentSelected"
+        @entry-changed="onEntryChanged"
+        :id="metsDiv.id"
+        :class="{ 'is-closed': closed }"
         v-for="div in metsDiv.children"
+        :pageNum="pageNum"
         :key="div.id"
         :metsDiv="div"
         :prefix="prefix + (showEntry ? '\xa0\xa0\xa0\xa0' : '')"
+        @data-changed="$emit('data-changed', $event)"
       />
     </div>
   </div>
@@ -24,12 +38,25 @@ export default {
       default: "",
     },
     metsDiv: Object,
-    
+    pageNum: Number,
+    newSelected: String,
   },
   components: {
     TocTree: () => import("./TocTree.vue"),
   },
+  watch: {
+    newSelected(newValue) {
+      this.currentSelected = newValue;
+    },
+  },
   computed: {
+    isCurrentPage() {
+      console.log(this.pageNum);
+      if (this.metsDiv.pages) {
+        return this.metsDiv.pages.includes(this.pageNum);
+      }
+      return false;
+    },
     closedSign() {
       if (this.isFinished) return "";
       return this.closed ? "▲" : "▼";
@@ -49,6 +76,7 @@ export default {
         case "SECTION":
         case "ARTICLE":
         case "Newspaper":
+        case "ILLUSTRATION":
           return true;
       }
 
@@ -62,10 +90,23 @@ export default {
       return this.metsDiv.children == undefined;
     },
   },
-  methods: {},
+  methods: {
+    onEntryChanged(metsId) {
+      this.currentSelected = metsId;
+      this.$emit("entry-changed", metsId);
+      this.$emit("data-changed", {
+        pages: this.metsDiv.pages,
+        areas: this.metsDiv.areas,
+      });
+    },
+    onElementClicked() {
+      this.onEntryChanged(this.metsDiv.id);
+    },
+  },
 
   data: () => ({
     closed: false,
+    currentSelected: "",
   }),
 };
 </script>
@@ -84,5 +125,13 @@ export default {
 
 .is-closed {
   display: none;
+}
+
+.current-page {
+  font-weight: bold;
+}
+
+.toc-element.selected {
+  background-color: lightblue;
 }
 </style>

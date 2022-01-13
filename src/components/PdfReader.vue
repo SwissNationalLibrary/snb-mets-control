@@ -15,20 +15,28 @@
               ></b-form-input
               >/ {{ nbPages }}</span
             >
-            <b-button :disableD="pageNum == nbPages" @click="nextPage"
+            <b-button :disabled="pageNum == nbPages" @click="nextPage"
               >Next</b-button
             >
           </b-form>
         </b-col>
       </b-row>
       <b-row no-gutters>
-        <b-col id="pdf-layer-parent" class="scrollable-xy">
-          <div id="blocks-layer"></div>
-          <canvas
-            id="pdf-layer"
-            @wheel="zoomEvent"
-            :style="{ transform: 'scale(' + scale + ')' }"
-          ></canvas>
+        <b-col
+          id="pdf-layer-parent"
+          class="scrollable-xy"
+          @wheel="zoomEvent"
+          :style="{ transform: 'scale(' + scale + ')' }"
+        >
+          <div id="blocks-layer">
+            <div
+              :key="area.id"
+              v-for="area in visibleBlocksArray"
+              class="block article"
+              :style="getAreaCSS(area)"
+            ></div>
+          </div>
+          <canvas id="pdf-layer"></canvas>
         </b-col>
       </b-row>
     </b-container>
@@ -43,9 +51,14 @@ export default {
   name: "PdfReader",
   props: {
     mets: Object,
+    tocData: Object,
   },
   components: {},
-  computed: {},
+  computed: {
+    visibleBlocksArray() {
+      return this.areas.filter((area) => area.page === this.pageNum);
+    },
+  },
 
   data: () => ({
     pdf: null,
@@ -54,22 +67,36 @@ export default {
     canvas: null,
     context: null,
     scale: 1,
-    pageNum: 1,
+    pageNum: 0,
     ro: null,
+    areas: [],
   }),
   watch: {
+    tocData(data) {
+      if (!data.pages.includes(this.pageNum)) {
+        this.pageNum = data.pages[0];
+      }
+      // Load blocks
+      this.areas = data.areas;
+    },
     async pageNum(newPageNum) {
       if (newPageNum > this.nbPages) this.pageNum = this.nbPages;
-      this.$emit('page-changed', newPageNum);
+      this.$emit("page-changed", newPageNum);
       await this.loadPage(Number(newPageNum));
-
     },
     async mets() {
       await this.loadPDF();
     },
-
   },
   methods: {
+    getAreaCSS(area) {
+      return {
+        top: `${area.vpos * this.canvas.height}px`,
+        left: `${area.hpos * this.canvas.width}px`,
+        height: `${area.height * this.canvas.height}px`,
+        width: `${area.width * this.canvas.width}px`,
+      };
+    },
     async loadPDF() {
       this.scale = 1;
       let pdfData = await metsAltoRequests.getPDFFileData(this.mets);
@@ -78,7 +105,7 @@ export default {
       this.nbPages = this.pdf.numPages;
       this.canvas = document.getElementById("pdf-layer");
       this.context = this.canvas.getContext("2d");
-      this.loadPage(1);
+      this.pageNum = 1;
     },
 
     async nextPage() {

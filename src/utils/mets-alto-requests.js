@@ -1,6 +1,7 @@
 import xml2js from 'xml2js';
 import fs from 'fs/promises';
 import dbRequests from "../utils/db-requests";
+import jp from "jsonpath";
 
 class MetsRequests {
     constructor() {
@@ -8,6 +9,7 @@ class MetsRequests {
         this.metsData = {};
         this.usableTOC = {};
         this.altoData = {};
+        this.altoToPage = {}
     }
 
     get mets() {
@@ -24,15 +26,22 @@ class MetsRequests {
     }
 
     startTransformToUsableTOC() {
-        let root;
-        for (let i = 0; this.metsData.mets.structMap.length; i++) {
-            if (this.metsData.mets.structMap[i].$.TYPE == "LOGICAL") {
-                root = this.metsData.mets.structMap[i].div[0];
-                break;
-            }
-        }
+        let root = this.metsData.mets.structMap.find(map => map.$.TYPE === "LOGICAL");
         this.usableTOC = this.transformToUsableTOC(root, {});
+        console.log(this.usableTOC)
     }
+
+    getAltoAreas(node) {
+        let areasPath = jp.query(node, "$..area[*]");
+        let areas = [];
+        areasPath.forEach(area => {
+            areas.push(this.altoData[area.$.FILEID][area.$.BEGIN])
+        });
+
+
+        return areas;
+    }
+
 
     transformToUsableTOC(currentDiv, currentTree) {
         if (currentDiv.div == undefined) {
@@ -41,7 +50,14 @@ class MetsRequests {
                 case 'TEXTBLOCK':
                 case 'HEADLINE':
                 case 'ADVERTISEMENT':
-                    return { type: currentDiv.$.TYPE }
+                    var areas = this.getAltoAreas(currentDiv);
+                    console.log(areas);
+                    return {
+                        id: currentDiv.$.ID,
+                        type: currentDiv.$.TYPE,
+                        areas: areas,
+                        pages: areas.map(area => area.page)
+                    }
             }
             return null;
         }
@@ -49,6 +65,16 @@ class MetsRequests {
         currentTree['type'] = currentDiv.$.TYPE;
         currentTree['label'] = currentDiv.$.LABEL;
         currentTree['id'] = currentDiv.$.ID;
+
+        switch (currentDiv.$.TYPE) {
+            case "SECTION":
+            case "ARTICLE":
+            case "Newspaper":
+            case 'ILLUSTRATION':
+                currentTree['areas'] = this.getAltoAreas(currentDiv);
+                currentTree['pages'] = [...new Set(currentTree['areas'].map(area => area.page))];
+                break;
+        }
 
         currentTree['children'] = [];
         currentDiv.div.forEach(div => {
@@ -60,12 +86,11 @@ class MetsRequests {
     }
 
     async parseMets(mets) {
+        await this.parseAllAlto(mets);
         let parser = new xml2js.Parser();
         let path = `/${mets.PATH}/${mets.FILENAME}`;
         let xmlData = await fs.readFile(this.dataPath + path)
         this.metsData = await parser.parseStringPromise(xmlData);
-        await this.parseAllAlto(mets);
-        console.log(this.altoData);
 
         this.startTransformToUsableTOC();
     }
@@ -73,14 +98,14 @@ class MetsRequests {
     async parseAllAlto(mets) {
         let filenames = await dbRequests.getAltoFilenames(mets.ID_METS)
 
-        filenames.forEach(async filename => {
+        for (const filename of filenames) {
             let data = await fs.readFile(`${this.dataPath}/${mets.PATH}/${filename.FILENAME}`);
-            this.altoData[filename.FILEID] = await this.parseAlto(data);
-        });
+            this.altoData[filename.FILEID] = await this.parseAlto(filename.FILEID, data);
+        }
 
     }
 
-    async parseAlto(altoXmlData) {
+    async parseAlto(fileId, altoXmlData) {
         let parser = new xml2js.Parser();
         let data = await parser.parseStringPromise(altoXmlData);
         let width = data.alto.Layout[0].Page[0].$.WIDTH;
@@ -89,14 +114,16 @@ class MetsRequests {
         let composedBlocks = data.alto.Layout[0].Page[0].PrintSpace[0].ComposedBlock;
 
         let blocks = {};
-
+        this.altoToPage[fileId] = Number(data.alto.Layout[0].Page[0].$.PHYSICAL_IMG_NR);
         if (textBlocks) {
             textBlocks.forEach(textBlock => {
                 blocks[textBlock.$.ID] = {
+                    id: textBlock.$.ID,
                     vpos: textBlock.$.VPOS / height,
                     hpos: textBlock.$.HPOS / width,
                     width: textBlock.$.WIDTH / width,
                     height: textBlock.$.HEIGHT / height,
+                    page: this.altoToPage[fileId],
                 };
             });
         }
@@ -109,6 +136,7 @@ class MetsRequests {
                     hpos: composedBlock.$.HPOS / width,
                     width: composedBlock.$.WIDTH / width,
                     height: composedBlock.$.HEIGHT / height,
+                    page: this.altoToPage[fileId],
                 }
             });
         }
@@ -117,9 +145,7 @@ class MetsRequests {
     }
 
     async getPDFFileData(mets) {
-        console.log("asdfasdfasd")
         let filename = await dbRequests.getPDFFilename(mets.ID_METS);
-        console.log("asdfasdfasd")
         let path = `/${mets.PATH}/${filename}`;
         let pdfData = await fs.readFile(this.dataPath + path);
         return pdfData;
