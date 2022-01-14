@@ -12,7 +12,7 @@
                 :metsDiv="metsDiv"
               /> </b-overlay
           ></pane>
-          <pane min-size="5" class="scrollable-xy">
+          <pane min-size="5">
             <PdfReader
               @page-changed="pageNum = $event"
               :tocData="tocData"
@@ -84,6 +84,9 @@ export default {
   watch: {
     async selectedMets(selected) {
       this.loadingMets = true;
+      this.metsDiv = null;
+      this.pageNum = 0;
+      this.tocData = null;
       metsAltoRequests.parseMets(selected).then(() => {
         this.metsDiv = metsAltoRequests.metsLogicalStructure;
       });
@@ -111,7 +114,7 @@ export default {
 
 <style>
 .scrollable {
-  height: 100%;
+  height: 100vh;
   overflow-x: auto;
 }
 

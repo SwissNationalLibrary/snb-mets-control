@@ -48,10 +48,12 @@ export default {
     newSelected(newValue) {
       this.currentSelected = newValue;
     },
+    metsDiv() {
+
+    }
   },
   computed: {
     isCurrentPage() {
-      console.log(this.pageNum);
       if (this.metsDiv.pages) {
         return this.metsDiv.pages.includes(this.pageNum);
       }

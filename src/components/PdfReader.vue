@@ -11,7 +11,9 @@
               <b-form-input
                 style="width: 50px"
                 size="sm"
-                v-model="pageNum"
+                :value="pageNum"
+                v-on:submit.native.prevent=""
+                @keypress.enter="console.log($event)"
               ></b-form-input
               >/ {{ nbPages }}</span
             >
@@ -21,12 +23,17 @@
           </b-form>
         </b-col>
       </b-row>
-      <b-row no-gutters>
+      <b-row
+        no-gutters
+        @wheel="zoomEvent"
+        style="height: 95vh; overflow: scroll"
+      >
         <b-col
           id="pdf-layer-parent"
-          class="scrollable-xy"
-          @wheel="zoomEvent"
-          :style="{ transform: 'scale(' + scale + ')' }"
+          :style="{
+            transformOrigin: 'top left',
+            transform: 'scale(' + scale + ')',
+          }"
         >
           <div id="blocks-layer">
             <div
@@ -68,7 +75,6 @@ export default {
     context: null,
     scale: 1,
     pageNum: 0,
-    ro: null,
     areas: [],
   }),
   watch: {
@@ -85,6 +91,7 @@ export default {
       await this.loadPage(Number(newPageNum));
     },
     async mets() {
+      this.context?.clearRect(0, 0, this.canvas.width, this.canvas.height);
       await this.loadPDF();
     },
   },
@@ -119,12 +126,11 @@ export default {
       await this.loadPage(this.pageNum);
     },
     zoomEvent(e) {
-      console.log(e);
       if (e.ctrlKey) {
         if (e.deltaY < 0) {
-          this.scale *= 1.5;
+          this.scale *= 1.25;
         } else {
-          this.scale /= 1.5;
+          this.scale /= 1.25;
         }
         //   this.setPageScale();
       }

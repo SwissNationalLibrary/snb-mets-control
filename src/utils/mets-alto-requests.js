@@ -51,7 +51,6 @@ class MetsRequests {
                 case 'HEADLINE':
                 case 'ADVERTISEMENT':
                     var areas = this.getAltoAreas(currentDiv);
-                    console.log(areas);
                     return {
                         id: currentDiv.$.ID,
                         type: currentDiv.$.TYPE,
