@@ -12,6 +12,10 @@ class MetsRequests {
         this.altoToPage = {}
     }
 
+    get colorsTable() {
+        return dbRequests.colorsTable;
+    }
+
     get mets() {
         return this.metsData;
     }
@@ -31,6 +35,7 @@ class MetsRequests {
         console.log(this.usableTOC)
     }
 
+
     getAltoAreas(node) {
         let areasPath = jp.query(node, "$..area[*]");
         let areas = [];
@@ -38,12 +43,37 @@ class MetsRequests {
             areas.push(this.altoData[area.$.FILEID][area.$.BEGIN])
         });
 
-
         return areas;
     }
 
-
     transformToUsableTOC(currentDiv, currentTree) {
+        if (currentDiv == undefined) {
+            return null;
+        }
+
+        console.log(currentDiv);
+        let element = dbRequests.colorsTable.find(el => el.ENTITYNAME === currentDiv.$.TYPE);
+
+        if (element) {
+            currentTree['areas'] = this.getAltoAreas(currentDiv);
+            currentTree['pages'] = [...new Set(currentTree['areas'].map(area => area.page))];
+            currentTree['type'] = currentDiv.$.TYPE;
+        }
+
+        currentTree['label'] = currentDiv.$.LABEL;
+        currentTree['id'] = currentDiv.$.ID;
+        currentTree['children'] = [];
+        currentDiv.div?.forEach(div => {
+            let transformed = this.transformToUsableTOC(div, {});
+            if (transformed) currentTree['children'].push(transformed);
+
+        });
+
+
+        return currentTree;
+    }
+
+    _transformToUsableTOC(currentDiv, currentTree) {
         if (currentDiv.div == undefined) {
             switch (currentDiv.$.TYPE) {
                 case 'PUBLISHING_STMT':

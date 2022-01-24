@@ -3,6 +3,11 @@ class DbRequests {
     constructor() {
         this.data = {};
         this.errorMetsData = [];
+        this.colors = [];
+    }
+
+    get colorsTable() {
+        return this.colors;
     }
 
     get mets() {
@@ -31,12 +36,23 @@ class DbRequests {
         return hash;
     }
 
+    async loadColors() {
+        return new Promise((resolve, reject) => {
+            this.db.all("SELECT RCOLOR, GCOLOR, BCOLOR, ENTITYNAME, DOCTYPE FROM ENTITYCONFIGURATION WHERE USEDNAMALYS = 1", (err, data) => {
+                if (err) reject(err);
+                this.colors = data;
+                resolve();
+            })
+        })
+    }
+
     async loadDatabase(dbPath) {
         return new Promise((resolve, reject) => {
             this.db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, async (err) => {
                 if (err) reject(err);
                 await this.loadMETS();
                 await this.loadErrorsMets();
+                await this.loadColors();
                 resolve();
             })
         })

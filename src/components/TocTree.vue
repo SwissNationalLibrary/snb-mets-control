@@ -30,6 +30,8 @@
 </template>
 
 <script>
+import metsAltoRequests from "../utils/mets-alto-requests";
+
 export default {
   name: "TocTree",
   props: {
@@ -48,9 +50,7 @@ export default {
     newSelected(newValue) {
       this.currentSelected = newValue;
     },
-    metsDiv() {
-
-    }
+    metsDiv() {},
   },
   computed: {
     isCurrentPage() {
@@ -71,18 +71,10 @@ export default {
       }
     },
     showEntry() {
-      if (this.metsDiv.label == undefined && this.metsDiv.children == undefined)
-        return true;
-
-      switch (this.metsDiv.type) {
-        case "SECTION":
-        case "ARTICLE":
-        case "Newspaper":
-        case "ILLUSTRATION":
-          return true;
-      }
-
-      return false;
+      let element = metsAltoRequests.colorsTable.find(
+        (el) => el.ENTITYNAME === this.metsDiv.type
+      );
+      return element !== undefined;
     },
     hasNothing() {
       return this.metsDiv == undefined;
@@ -99,6 +91,7 @@ export default {
       this.$emit("data-changed", {
         pages: this.metsDiv.pages,
         areas: this.metsDiv.areas,
+        type: this.metsDiv.type,
       });
     },
     onElementClicked() {

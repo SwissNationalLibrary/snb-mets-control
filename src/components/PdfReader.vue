@@ -46,7 +46,7 @@
             <div
               :key="area.id"
               v-for="area in visibleBlocksArray"
-              class="block article"
+              class="block"
               :style="getAreaCSS(area)"
             ></div>
           </div>
@@ -72,6 +72,12 @@ export default {
     visibleBlocksArray() {
       return this.areas.filter((area) => area.page === this.pageNum);
     },
+    areaColor() {
+      let element = metsAltoRequests.colorsTable.find(
+        (el) => el.ENTITYNAME == this.type
+      );
+      return `rgb(${element.RCOLOR}, ${element.GCOLOR}, ${element.BCOLOR})`;
+    },
   },
 
   data: () => ({
@@ -83,6 +89,7 @@ export default {
     scale: 1,
     pageNum: 0,
     areas: [],
+    type: null,
     hideAreas: false,
   }),
   watch: {
@@ -91,6 +98,7 @@ export default {
         this.pageNum = data.pages[0];
       }
       // Load blocks
+      this.type = data.type;
       this.areas = data.areas;
     },
     async pageNum(newPageNum) {
@@ -113,6 +121,7 @@ export default {
         left: `${area.hpos * this.canvas.width}px`,
         height: `${area.height * this.canvas.height}px`,
         width: `${area.width * this.canvas.width}px`,
+        backgroundColor: this.areaColor,
       };
     },
     async loadPDF() {
@@ -208,21 +217,6 @@ export default {
   opacity: 0.3;
   border-style: solid;
   border-width: 2px;
-}
-
-.block.section {
-  background-color: red;
-  border-color: darkred;
-}
-
-.block.article {
-  background-color: red;
-  border-color: darkred;
-}
-
-.block.illustration {
-  background-color: red;
-  border-color: darkred;
 }
 
 #pdf-reader-bar > * {
