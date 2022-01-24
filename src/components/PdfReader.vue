@@ -1,10 +1,10 @@
 <template>
   <div>
     <b-container fluid class="no-margins">
-      <b-row no-gutters>
+      <b-row no-gutters class="m-2">
         <b-col>
-          <b-form inline>
-            <b-button :disabled="pageNum == 1" @click="previousPage"
+          <b-form id="pdf-reader-bar" inline @submit.stop.prevent>
+            <b-button :disabled="pageNum <= 1" @click="previousPage"
               >Prev</b-button
             >
             <span>
@@ -13,13 +13,20 @@
                 size="sm"
                 :value="pageNum"
                 v-on:submit.native.prevent=""
-                @keypress.enter="console.log($event)"
+                @keypress.enter="onPageEnter"
               ></b-form-input
-              >/ {{ nbPages }}</span
+              >/ <span class="mr-2">{{ nbPages }}</span></span
             >
-            <b-button :disabled="pageNum == nbPages" @click="nextPage"
+            <b-button :disabled="pageNum >= nbPages" @click="nextPage"
               >Next</b-button
             >
+
+            <b-button @click="zoomIn">Zoom In</b-button>
+            <b-button @click="zoomOut">Zoom Out</b-button>
+            <b-button @click="resetZoom">Reset Zoom</b-button>
+            <b-form-checkbox v-model="hideAreas" name="check-button">
+              Hide boxes
+            </b-form-checkbox>
           </b-form>
         </b-col>
       </b-row>
@@ -35,7 +42,7 @@
             transform: 'scale(' + scale + ')',
           }"
         >
-          <div id="blocks-layer">
+          <div id="blocks-layer" :class="{ 'hide-areas': hideAreas }">
             <div
               :key="area.id"
               v-for="area in visibleBlocksArray"
@@ -76,6 +83,7 @@ export default {
     scale: 1,
     pageNum: 0,
     areas: [],
+    hideAreas: false,
   }),
   watch: {
     tocData(data) {
@@ -91,11 +99,14 @@ export default {
       await this.loadPage(Number(newPageNum));
     },
     async mets() {
-      this.context?.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      //this.context?.clearRect(0, 0, this.canvas.width, this.canvas.height);
       await this.loadPDF();
     },
   },
   methods: {
+    onPageEnter(e) {
+      this.pageNum = Number(e.target.value);
+    },
     getAreaCSS(area) {
       return {
         top: `${area.vpos * this.canvas.height}px`,
@@ -116,21 +127,30 @@ export default {
     },
 
     async nextPage() {
-      if (this.pageNum == this.nbPages) return;
+      if (this.pageNum >= this.nbPages) return;
       this.pageNum++;
       await this.loadPage(this.pageNum);
     },
     async previousPage() {
-      if (this.pageNum == 1) return;
+      if (this.pageNum <= 1) return;
       this.pageNum--;
       await this.loadPage(this.pageNum);
+    },
+    zoomIn() {
+      this.scale *= 1.25;
+    },
+    zoomOut() {
+      this.scale /= 1.25;
+    },
+    resetZoom() {
+      this.scale = 1;
     },
     zoomEvent(e) {
       if (e.ctrlKey) {
         if (e.deltaY < 0) {
-          this.scale *= 1.25;
+          this.zoomIn();
         } else {
-          this.scale /= 1.25;
+          this.zoomOut();
         }
         //   this.setPageScale();
       }
@@ -185,16 +205,31 @@ export default {
 .block {
   position: absolute;
   z-index: 1;
-  opacity: 0.5;
+  opacity: 0.3;
   border-style: solid;
   border-width: 2px;
 }
 
 .block.section {
+  background-color: red;
+  border-color: darkred;
 }
 
 .block.article {
   background-color: red;
   border-color: darkred;
+}
+
+.block.illustration {
+  background-color: red;
+  border-color: darkred;
+}
+
+#pdf-reader-bar > * {
+  margin-right: 8px;
+}
+
+.hide-areas {
+  display: none;
 }
 </style>

@@ -4,7 +4,7 @@
       <pane>
         <splitpanes>
           <pane size="15" min-size="5">
-            <b-overlay :show="loadingMets" rounded="sm"
+            <b-overlay style="height: 100%" :show="loadingMets" rounded="sm"
               ><toc-tree
                 @data-changed="tocData = $event"
                 :pageNum="pageNum"
@@ -13,11 +13,13 @@
               /> </b-overlay
           ></pane>
           <pane min-size="5">
-            <PdfReader
-              @page-changed="pageNum = $event"
-              :tocData="tocData"
-              :mets="selectedMets"
-            ></PdfReader>
+            <b-overlay style="height: 100%" :show="loadingMets" rounded="sm">
+              <PdfReader
+                @page-changed="pageNum = $event"
+                :tocData="tocData"
+                :mets="selectedMets"
+              ></PdfReader
+            ></b-overlay>
           </pane>
           <pane size="15" min-size="5">
             <b-container style="height: 100%" class="p-0">
@@ -87,9 +89,8 @@ export default {
       this.metsDiv = null;
       this.pageNum = 0;
       this.tocData = null;
-      metsAltoRequests.parseMets(selected).then(() => {
-        this.metsDiv = metsAltoRequests.metsLogicalStructure;
-      });
+      await metsAltoRequests.parseMets(selected);
+      this.metsDiv = metsAltoRequests.metsLogicalStructure;
 
       this.loadingMets = false;
     },
