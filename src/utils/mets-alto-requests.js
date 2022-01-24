@@ -51,7 +51,6 @@ class MetsRequests {
             return null;
         }
 
-        console.log(currentDiv);
         let element = dbRequests.colorsTable.find(el => el.ENTITYNAME === currentDiv.$.TYPE);
 
         if (element) {
@@ -115,6 +114,11 @@ class MetsRequests {
     }
 
     async parseMets(mets) {
+        this.metsData = {};
+        this.usableTOC = {};
+        this.altoData = {};
+        this.altoToPage = {}
+
         await this.parseAllAlto(mets);
         let parser = new xml2js.Parser();
         let path = `/${mets.PATH}/${mets.FILENAME}`;

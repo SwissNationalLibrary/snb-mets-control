@@ -44,13 +44,27 @@
         >
           <div id="blocks-layer" :class="{ 'hide-areas': hideAreas }">
             <div
+              :id="area.id"
               :key="area.id"
               v-for="area in visibleBlocksArray"
               class="block"
               :style="getAreaCSS(area)"
-            ></div>
+            >
+              <b-tooltip v-if="label" :target="area.id" triggers="hover">
+                {{ label }}
+              </b-tooltip>
+            </div>
           </div>
-          <canvas id="pdf-layer"></canvas>
+          <div id="pdf-canvases">
+            <canvas
+              :style="{
+                position: 'absolute',
+                visibility: i == pageNum ? 'visible' : 'hidden',
+              }"
+              :key="i"
+              v-for="i in nbPages"
+            ></canvas>
+          </div>
         </b-col>
       </b-row>
     </b-container>
@@ -84,12 +98,14 @@ export default {
     pdf: null,
     page: null,
     nbPages: 0,
-    canvas: null,
-    context: null,
+    canvases: [],
+    contexts: [],
+    renderedPages: [],
     scale: 1,
     pageNum: 0,
     areas: [],
     type: null,
+    label: null,
     hideAreas: false,
   }),
   watch: {
@@ -100,8 +116,10 @@ export default {
       // Load blocks
       this.type = data.type;
       this.areas = data.areas;
+      this.label = data.label;
     },
     async pageNum(newPageNum) {
+      if (newPageNum == 0) return;
       if (newPageNum > this.nbPages) this.pageNum = this.nbPages;
       this.$emit("page-changed", newPageNum);
       await this.loadPage(Number(newPageNum));
@@ -117,33 +135,35 @@ export default {
     },
     getAreaCSS(area) {
       return {
-        top: `${area.vpos * this.canvas.height}px`,
-        left: `${area.hpos * this.canvas.width}px`,
-        height: `${area.height * this.canvas.height}px`,
-        width: `${area.width * this.canvas.width}px`,
+        top: `${area.vpos * this.canvases[this.pageNum - 1].height}px`,
+        left: `${area.hpos * this.canvases[this.pageNum - 1].width}px`,
+        height: `${area.height * this.canvases[this.pageNum - 1].height}px`,
+        width: `${area.width * this.canvases[this.pageNum - 1].width}px`,
         backgroundColor: this.areaColor,
       };
     },
     async loadPDF() {
       this.scale = 1;
+      this.renderedPages = [];
+      this.pageNum = 0;
       let pdfData = await metsAltoRequests.getPDFFileData(this.mets);
       let loadingTask = pdfjs.getDocument(pdfData);
       this.pdf = await loadingTask.promise;
       this.nbPages = this.pdf.numPages;
-      this.canvas = document.getElementById("pdf-layer");
-      this.context = this.canvas.getContext("2d");
-      this.pageNum = 1;
+      this.$nextTick(() => {
+        this.canvases = Array.from(document.getElementsByTagName("canvas"));
+        this.contexts = this.canvases.map((canvas) => canvas.getContext("2d"));
+        this.pageNum = 1;
+      });
     },
 
     async nextPage() {
       if (this.pageNum >= this.nbPages) return;
       this.pageNum++;
-      await this.loadPage(this.pageNum);
     },
     async previousPage() {
       if (this.pageNum <= 1) return;
       this.pageNum--;
-      await this.loadPage(this.pageNum);
     },
     zoomIn() {
       this.scale *= 1.25;
@@ -167,24 +187,26 @@ export default {
 
     async setPageScale() {
       let viewport = this.page.getViewport({ scale: 1 });
-      this.canvas.width = viewport.width;
-      this.canvas.height = viewport.height;
+      this.canvases[this.pageNum - 1].width = viewport.width;
+      this.canvases[this.pageNum - 1].height = viewport.height;
       this.page.render({
-        canvasContext: this.context,
+        canvasContext: this.contexts[this.pageNum - 1],
         viewport: viewport,
       });
     },
 
     async loadPage(pageNb) {
+      if (this.renderedPages.includes(pageNb)) return;
       this.scale = 1;
       this.page = await this.pdf.getPage(pageNb);
       let viewport = this.page.getViewport({ scale: this.scale });
-      this.canvas.width = viewport.width;
-      this.canvas.height = viewport.height;
-      this.page.render({
-        canvasContext: this.context,
+      this.canvases[this.pageNum - 1].width = viewport.width;
+      this.canvases[this.pageNum - 1].height = viewport.height;
+      await this.page.render({
+        canvasContext: this.contexts[this.pageNum - 1],
         viewport: viewport,
       });
+      this.renderedPages.push(pageNb);
     },
   },
   async mounted() {},
@@ -206,9 +228,6 @@ export default {
 .no-margins {
   margin: 0;
   padding: 0;
-}
-
-#blocks-layer {
 }
 
 .block {

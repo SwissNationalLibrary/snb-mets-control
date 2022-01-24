@@ -11,25 +11,23 @@
         :class="{ 'mets-selected': item.ID_METS === currentIdMets }"
         @click="metsSelected(item)"
       >
-        {{ item.FILENAME }}
+        <span>{{ item.FILENAME }} </span>
+        <span>
+          <b-icon icon="folder" @click="openFolder($event, item)"></b-icon
+        ></span>
       </div>
     </template>
   </RecycleScroller>
 </template>
 
 <script>
+import { ipcRenderer } from "electron";
+import metsAltoRequests from "../utils/mets-alto-requests";
 export default {
   props: {
     mets: Array,
   },
-  computed: {
-    metsFields() {
-      return [
-        { key: "ID_METS", sortable: true },
-        { key: "FILENAME", sortable: true },
-      ];
-    },
-  },
+  computed: {},
   data: () => ({
     currentIdMets: null,
   }),
@@ -37,6 +35,14 @@ export default {
     metsSelected(mets) {
       this.currentIdMets = mets.ID_METS;
       this.$emit("select", mets);
+    },
+    async openFolder(event, item) {
+      event.stopPropagation();
+
+      await ipcRenderer.invoke(
+        "open-folder-with-file",
+        `${metsAltoRequests.dataPath}/${item.PATH}/${item.FILENAME}`
+      );
     },
   },
 };

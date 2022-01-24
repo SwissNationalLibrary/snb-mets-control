@@ -18,10 +18,6 @@ class DbRequests {
         return this.data.samplingMets;
     }
 
-    get dataPath() {
-        return this.dataPath;
-    }
-
     get errorMets() {
         return this.errorMetsData;
     }
@@ -48,6 +44,11 @@ class DbRequests {
 
     async loadDatabase(dbPath) {
         return new Promise((resolve, reject) => {
+            
+            this.data = {};
+            this.errorMetsData = [];
+            this.colors = [];
+
             this.db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, async (err) => {
                 if (err) reject(err);
                 await this.loadMETS();

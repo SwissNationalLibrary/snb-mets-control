@@ -1,5 +1,5 @@
-import { ipcMain, dialog } from 'electron'
-
+import { ipcMain, dialog, shell } from 'electron'
+import path from 'path';
 
 ipcMain.handle('choose-folder', async () => {
     let result = await dialog.showOpenDialog({
@@ -24,3 +24,7 @@ ipcMain.handle('choose-file', async (evt, filters) => {
         return result.filePaths[0];
     }
 });
+
+ipcMain.handle('open-folder-with-file', async (evt, filePath) => {
+    shell.showItemInFolder(path.normalize(filePath));
+})

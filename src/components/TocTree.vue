@@ -92,6 +92,7 @@ export default {
         pages: this.metsDiv.pages,
         areas: this.metsDiv.areas,
         type: this.metsDiv.type,
+        label: this.metsDiv.label,
       });
     },
     onElementClicked() {

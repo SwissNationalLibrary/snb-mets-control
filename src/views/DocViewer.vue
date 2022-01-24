@@ -37,10 +37,23 @@
                   ></b-form-radio-group>
                 </b-col>
               </b-row>
+              <b-row class="mt-3 ml-1 mr-1">
+                <b-col lg="auto">Order:</b-col>
+                <b-col >
+                  <b-form-select v-model="orderByAsc" class="mb-3">
+                    <b-form-select-option :value="true"
+                      >Ascending</b-form-select-option
+                    >
+                    <b-form-select-option :value="false"
+                      >Descending</b-form-select-option
+                    >
+                  </b-form-select>
+                </b-col>
+              </b-row>
               <hr />
               <b-row style="height: calc(100% - 47px)">
                 <b-col style="height: 100%; overflow-y: auto"
-                  ><mets-list @select="onMetsSelected" :mets="metsOffered"
+                  ><mets-list @select="onMetsSelected" :mets="metsSorted"
                 /></b-col>
               </b-row>
             </b-container>
@@ -81,6 +94,7 @@ export default {
       metsDiv: null,
       pageNum: 0,
       tocData: null,
+      orderByAsc: true,
     };
   },
   watch: {
@@ -96,7 +110,20 @@ export default {
     },
   },
   computed: {
+    metsSorted() {
+      let newArr = [...this.metsOffered].sort((a, b) => {
+        return a.FILENAME.localeCompare(b.FILENAME);
+      });
+
+      if (this.orderByAsc) {
+        return newArr;
+      } else {
+        newArr.reverse();
+        return newArr;
+      }
+    },
     metsOffered() {
+      console.log(this.mets);
       return this.samplesOnly ? this.samplingMets : this.mets;
     },
   },
