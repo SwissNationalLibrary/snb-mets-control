@@ -96,7 +96,7 @@ export default {
 
   data: () => ({
     pdf: null,
-    page: null,
+    pages: [],
     nbPages: 0,
     canvases: [],
     contexts: [],
@@ -150,6 +150,10 @@ export default {
       let loadingTask = pdfjs.getDocument(pdfData);
       this.pdf = await loadingTask.promise;
       this.nbPages = this.pdf.numPages;
+      for (let i = 0; i < this.nbPages; i++) {
+        this.pages[i] = await this.pdf.getPage(i + 1);
+      }
+
       this.$nextTick(() => {
         this.canvases = Array.from(document.getElementsByTagName("canvas"));
         this.contexts = this.canvases.map((canvas) => canvas.getContext("2d"));
@@ -186,10 +190,10 @@ export default {
     },
 
     async setPageScale() {
-      let viewport = this.page.getViewport({ scale: 1 });
+      let viewport = this.pages[this.pageNum-1].getViewport({ scale: 1 });
       this.canvases[this.pageNum - 1].width = viewport.width;
       this.canvases[this.pageNum - 1].height = viewport.height;
-      this.page.render({
+      this.pages[this.pageNum - 1].render({
         canvasContext: this.contexts[this.pageNum - 1],
         viewport: viewport,
       });
@@ -198,11 +202,10 @@ export default {
     async loadPage(pageNb) {
       if (this.renderedPages.includes(pageNb)) return;
       this.scale = 1;
-      this.page = await this.pdf.getPage(pageNb);
-      let viewport = this.page.getViewport({ scale: this.scale });
+      let viewport = this.pages[this.pageNum-1].getViewport({ scale: this.scale });
       this.canvases[this.pageNum - 1].width = viewport.width;
       this.canvases[this.pageNum - 1].height = viewport.height;
-      await this.page.render({
+      await this.pages[pageNb - 1].render({
         canvasContext: this.contexts[this.pageNum - 1],
         viewport: viewport,
       });
