@@ -5,7 +5,16 @@ module.exports = {
     electronBuilder: {
       nodeIntegration: true,
       preload: 'src/preload.js',
-
+      builderOptions: {
+        win: {
+          asarUnpack: "**\\*.node"
+        },
+        nsis: {
+          oneClick: false,
+          allowToChangeInstallationDirectory: true,
+          perMachine: true,
+        }
+      }
     }
   }
 }
