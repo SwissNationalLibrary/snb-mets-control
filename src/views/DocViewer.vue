@@ -24,6 +24,11 @@
           <pane size="15" min-size="5">
             <b-container style="height: 100%" class="p-0">
               <b-row class="mt-3 ml-1 mr-1 justify-content-center">
+                <b-col
+                  ><b-button @click="$emit('unload')">Change DB</b-button>
+                </b-col>
+              </b-row>
+              <b-row class="mt-3 ml-1 mr-1 justify-content-center">
                 <b-col>
                   <b-form-radio-group
                     size="sm"
@@ -39,7 +44,7 @@
               </b-row>
               <b-row class="mt-3 ml-1 mr-1">
                 <b-col lg="auto">Order:</b-col>
-                <b-col >
+                <b-col>
                   <b-form-select v-model="orderByAsc" class="mb-3">
                     <b-form-select-option :value="true"
                       >Ascending</b-form-select-option
@@ -123,7 +128,6 @@ export default {
       }
     },
     metsOffered() {
-      console.log(this.mets);
       return this.samplesOnly ? this.samplingMets : this.mets;
     },
   },

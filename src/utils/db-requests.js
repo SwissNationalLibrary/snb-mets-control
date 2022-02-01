@@ -44,7 +44,7 @@ class DbRequests {
 
     async loadDatabase(dbPath) {
         return new Promise((resolve, reject) => {
-            
+
             this.data = {};
             this.errorMetsData = [];
             this.colors = [];
@@ -63,7 +63,6 @@ class DbRequests {
             this.db.all('SELECT ERRORTYPE.ERROR, COUNT(*) FROM METSERROR INNER JOIN ERRORTYPE ON METSERROR.ID_ERRORTYPE = ERRORTYPE.ID_TYPE GROUP BY ERRORTYPE.ID_TYPE', (err, data) => {
                 if (err) reject(err);
                 this.errorMetsData = data;
-                console.log(this.errorMetsData)
                 resolve();
             })
         });
@@ -101,11 +100,9 @@ class DbRequests {
 
     async getPDFFilename(metsID) {
         return new Promise((resolve, reject) => {
-            console.log("first select")
 
             this.db.get("SELECT FILENAME FROM LINKEDFILES WHERE ID_METS = ? AND TYPE = 'ISSUEPDFGRP'", metsID, async (err, data) => {
                 if (err) reject(err);
-                console.log("after select")
 
                 resolve(data.FILENAME);
             });
