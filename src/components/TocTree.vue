@@ -9,7 +9,7 @@
       v-if="showEntry"
       @click="onElementClicked"
     >
-      {{ prefix }}<span @click="closed = !closed">{{ closedSign }}</span>
+      {{ prefix }}<span @click="closeSelected">{{ closedSign }}</span>
       {{ formattedEntry }}
     </p>
     <div v-if="!isFinished">
@@ -60,15 +60,13 @@ export default {
       return false;
     },
     closedSign() {
-      if (this.isFinished) return "";
+      if (this.isFinished || this.metsDiv.children.length == 0) return "\xa0";
       return this.closed ? "▲" : "▼";
     },
     formattedEntry() {
-      if (this.metsDiv.label) {
-        return `[${this.metsDiv.type}] ${this.metsDiv.label} `;
-      } else {
-        return `[${this.metsDiv.type}]`;
-      }
+      return `[${this.metsDiv.pages.join(", ")}][${this.metsDiv.type}] ${
+        this.metsDiv.label ? this.metsDiv.label : ""
+      }`;
     },
     showEntry() {
       let element = metsAltoRequests.colorsTable.find(
@@ -85,6 +83,11 @@ export default {
     },
   },
   methods: {
+    closeSelected(e) {
+      e.stopPropagation();
+
+      this.closed = !this.closed;
+    },
     onEntryChanged(metsId) {
       this.currentSelected = metsId;
       this.$emit("entry-changed", metsId);

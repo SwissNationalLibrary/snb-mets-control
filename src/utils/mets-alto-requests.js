@@ -31,7 +31,9 @@ class MetsRequests {
 
     startTransformToUsableTOC() {
         let root = this.metsData.mets.structMap.find(map => map.$.TYPE === "LOGICAL");
-        this.usableTOC = this.transformToUsableTOC(root, {});
+        this.usableTOC = {}
+        this.usableTOC['children'] = this.transformToUsableTOC(root);
+        this.usableTOC['id'] = 'ROOT';
         console.log(this.usableTOC)
     }
 
@@ -46,7 +48,51 @@ class MetsRequests {
         return areas;
     }
 
-    transformToUsableTOC(currentDiv, currentTree) {
+
+
+    transformToUsableTOC(currentDiv) {
+        if (currentDiv == undefined) {
+            return null;
+        }
+        let currentTree = {};
+
+        let element = dbRequests.colorsTable.find(el => el.ENTITYNAME === currentDiv.$.TYPE);
+
+        if (element) {
+            currentTree['areas'] = this.getAltoAreas(currentDiv);
+            currentTree['pages'] = [...new Set(currentTree['areas'].map(area => area.page))];
+            currentTree['type'] = currentDiv.$.TYPE;
+
+
+            currentTree['label'] = currentDiv.$.LABEL;
+            currentTree['id'] = currentDiv.$.ID;
+            currentTree['children'] = [];
+            currentDiv.div?.forEach(div => {
+                let transformed = this.transformToUsableTOC(div);
+                if (Array.isArray(transformed)) {
+                    currentTree['children'] = currentTree['children'].concat(transformed);
+                } else if (transformed) {
+                    currentTree['children'].push(transformed);
+                }
+            });
+        } else {
+            currentTree = [];
+
+            currentDiv.div?.forEach(div => {
+                let transformed = this.transformToUsableTOC(div);
+                if (Array.isArray(transformed)) {
+                    currentTree = currentTree.concat(transformed);
+                } else if (transformed) {
+                    currentTree.push(transformed);
+                }
+            });
+        }
+
+
+        return currentTree;
+    }
+
+    _transformToUsableTOC(currentDiv, currentTree) {
         if (currentDiv == undefined) {
             return null;
         }
@@ -72,46 +118,6 @@ class MetsRequests {
         return currentTree;
     }
 
-    _transformToUsableTOC(currentDiv, currentTree) {
-        if (currentDiv.div == undefined) {
-            switch (currentDiv.$.TYPE) {
-                case 'PUBLISHING_STMT':
-                case 'TEXTBLOCK':
-                case 'HEADLINE':
-                case 'ADVERTISEMENT':
-                    var areas = this.getAltoAreas(currentDiv);
-                    return {
-                        id: currentDiv.$.ID,
-                        type: currentDiv.$.TYPE,
-                        areas: areas,
-                        pages: areas.map(area => area.page)
-                    }
-            }
-            return null;
-        }
-
-        currentTree['type'] = currentDiv.$.TYPE;
-        currentTree['label'] = currentDiv.$.LABEL;
-        currentTree['id'] = currentDiv.$.ID;
-
-        switch (currentDiv.$.TYPE) {
-            case "SECTION":
-            case "ARTICLE":
-            case "Newspaper":
-            case 'ILLUSTRATION':
-                currentTree['areas'] = this.getAltoAreas(currentDiv);
-                currentTree['pages'] = [...new Set(currentTree['areas'].map(area => area.page))];
-                break;
-        }
-
-        currentTree['children'] = [];
-        currentDiv.div.forEach(div => {
-            let transformed = this.transformToUsableTOC(div, {});
-            if (transformed) currentTree['children'].push(transformed);
-        });
-
-        return currentTree;
-    }
 
     async parseMets(mets) {
         this.metsData = {};
