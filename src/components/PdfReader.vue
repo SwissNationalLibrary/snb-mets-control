@@ -21,9 +21,9 @@
               ><b-icon icon="arrow-right"
             /></b-button>
 
-            <b-button @click="zoomIn"><b-icon icon="zoom-in" /></b-button>
-            <b-button @click="zoomOut"><b-icon icon="zoom-out" /></b-button>
-            <b-button @click="resetZoom">Reset Zoom</b-button>
+            <b-button @click="zoomIn" :disabled="!pdf"><b-icon icon="zoom-in" /></b-button>
+            <b-button @click="zoomOut" :disabled="!pdf"><b-icon icon="zoom-out" /></b-button>
+            <b-button @click="resetZoom" :disabled="!pdf">Reset Zoom</b-button>
             <b-form-checkbox v-model="hideAreas" name="check-button">
               Hide boxes
             </b-form-checkbox>
@@ -101,6 +101,7 @@ export default {
     canvases: [],
     contexts: [],
     renderedPages: [],
+    defaultScale: 0.85,
     scale: 1,
     pageNum: 0,
     areas: [],
@@ -143,7 +144,7 @@ export default {
       };
     },
     async loadPDF() {
-      this.scale = 1;
+      this.scale = this.defaultScale;
       this.renderedPages = [];
       this.pageNum = 0;
       let pdfData = await metsAltoRequests.getPDFFileData(this.mets);
@@ -176,7 +177,7 @@ export default {
       this.scale /= 1.25;
     },
     resetZoom() {
-      this.scale = 1;
+      this.scale = this.defaultScale;
     },
     zoomEvent(e) {
       if (e.ctrlKey) {
@@ -201,7 +202,7 @@ export default {
 
     async loadPage(pageNb) {
       if (this.renderedPages.includes(pageNb)) return;
-      this.scale = 1;
+      this.scale = this.defaultScale;
       let viewport = this.pages[this.pageNum - 1].getViewport({
         scale: this.scale,
       });
