@@ -56,7 +56,7 @@
                 </b-col>
               </b-row>
               <hr />
-              <b-row style="height: calc(100% - 47px)">
+              <b-row style="height: calc(100% - 204px)">
                 <b-col style="height: 100%; overflow-y: auto"
                   ><mets-list @select="onMetsSelected" :mets="metsSorted"
                 /></b-col>

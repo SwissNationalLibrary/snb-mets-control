@@ -5,8 +5,8 @@
         <b-col>
           <b-form id="pdf-reader-bar" inline @submit.stop.prevent>
             <b-button :disabled="pageNum <= 1" @click="previousPage"
-              >Prev</b-button
-            >
+              ><b-icon icon="arrow-left"
+            /></b-button>
             <span>
               <b-form-input
                 style="width: 50px"
@@ -18,11 +18,11 @@
               >/ <span class="mr-2">{{ nbPages }}</span></span
             >
             <b-button :disabled="pageNum >= nbPages" @click="nextPage"
-              >Next</b-button
-            >
+              ><b-icon icon="arrow-right"
+            /></b-button>
 
-            <b-button @click="zoomIn">Zoom In</b-button>
-            <b-button @click="zoomOut">Zoom Out</b-button>
+            <b-button @click="zoomIn"><b-icon icon="zoom-in" /></b-button>
+            <b-button @click="zoomOut"><b-icon icon="zoom-out" /></b-button>
             <b-button @click="resetZoom">Reset Zoom</b-button>
             <b-form-checkbox v-model="hideAreas" name="check-button">
               Hide boxes
@@ -33,7 +33,7 @@
       <b-row
         no-gutters
         @wheel="zoomEvent"
-        style="height: 95vh; overflow: scroll"
+        style="height: calc(100vh - 54px); overflow: scroll"
       >
         <b-col
           id="pdf-layer-parent"
@@ -190,7 +190,7 @@ export default {
     },
 
     async setPageScale() {
-      let viewport = this.pages[this.pageNum-1].getViewport({ scale: 1 });
+      let viewport = this.pages[this.pageNum - 1].getViewport({ scale: 1 });
       this.canvases[this.pageNum - 1].width = viewport.width;
       this.canvases[this.pageNum - 1].height = viewport.height;
       this.pages[this.pageNum - 1].render({
@@ -202,7 +202,9 @@ export default {
     async loadPage(pageNb) {
       if (this.renderedPages.includes(pageNb)) return;
       this.scale = 1;
-      let viewport = this.pages[this.pageNum-1].getViewport({ scale: this.scale });
+      let viewport = this.pages[this.pageNum - 1].getViewport({
+        scale: this.scale,
+      });
       this.canvases[this.pageNum - 1].width = viewport.width;
       this.canvases[this.pageNum - 1].height = viewport.height;
       await this.pages[pageNb - 1].render({
